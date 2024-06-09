@@ -1,0 +1,200 @@
+; RUN: opt < %s --passes="custom-opts-one-is-zero-transform,instcombine" -S | FileCheck %s
+
+define dso_local noundef i32 @_Z5test1ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp eq i32 %0, 0
+  %4 = icmp ne i32 %1, 0
+  %5 = and i1 %3, %4
+  %6 = icmp ne i32 %0, 0
+  %7 = icmp eq i32 %1, 0
+  %8 = and i1 %6, %7
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test1ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test2ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp ne i32 %1, 0
+  %4 = icmp eq i32 %0, 0
+  %5 = and i1 %4, %3
+  %6 = icmp ne i32 %0, 0
+  %7 = icmp eq i32 %1, 0
+  %8 = and i1 %6, %7
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test2ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test3ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp eq i32 %0, 0
+  %4 = icmp ne i32 %1, 0
+  %5 = and i1 %3, %4
+  %6 = icmp eq i32 %1, 0
+  %7 = icmp ne i32 %0, 0
+  %8 = and i1 %7, %6
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test3ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test4ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp ne i32 %1, 0
+  %4 = icmp eq i32 %0, 0
+  %5 = and i1 %4, %3
+  %6 = icmp eq i32 %1, 0
+  %7 = icmp ne i32 %0, 0
+  %8 = and i1 %7, %6
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test4ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test5ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp ne i32 %0, 0
+  %4 = icmp eq i32 %1, 0
+  %5 = and i1 %3, %4
+  %6 = icmp eq i32 %0, 0
+  %7 = icmp ne i32 %1, 0
+  %8 = and i1 %6, %7
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test5ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test6ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp eq i32 %1, 0
+  %4 = icmp ne i32 %0, 0
+  %5 = and i1 %4, %3
+  %6 = icmp eq i32 %0, 0
+  %7 = icmp ne i32 %1, 0
+  %8 = and i1 %6, %7
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test6ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test7ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp ne i32 %0, 0
+  %4 = icmp eq i32 %1, 0
+  %5 = and i1 %3, %4
+  %6 = icmp ne i32 %1, 0
+  %7 = icmp eq i32 %0, 0
+  %8 = and i1 %7, %6
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test7ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test8ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp eq i32 %1, 0
+  %4 = icmp ne i32 %0, 0
+  %5 = and i1 %4, %3
+  %6 = icmp ne i32 %1, 0
+  %7 = icmp eq i32 %0, 0
+  %8 = and i1 %7, %6
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test8ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z5test9ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp eq i32 %0, 0
+  %4 = icmp ne i32 %1, 0
+  %5 = and i1 %3, %4
+  %6 = icmp ne i32 %0, 0
+  %7 = icmp eq i32 %1, 0
+  %8 = and i1 %6, %7
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test9ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}
+
+
+define dso_local noundef i32 @_Z6test10ii(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
+  %3 = icmp eq i32 %1, 0
+  %4 = icmp ne i32 %0, 0
+  %5 = and i1 %4, %3
+  %6 = icmp ne i32 %1, 0
+  %7 = icmp eq i32 %0, 0
+  %8 = and i1 %7, %6
+  %9 = or i1 %5, %8
+  %10 = zext i1 %9 to i32
+  ret i32 %10
+
+; CHECK-LABEL: @_Z6test10ii(
+; CHECK-NEXT: %a.is.zero = icmp eq i32 %0, 0
+; CHECK-NEXT: %b.is.zero = icmp eq i32 %1, 0
+; CHECK-NEXT: %cmp = xor i1 %a.is.zero, %b.is.zero
+; CHECK-NEXT: %3 = zext i1 %cmp to i32
+; CHECK-NEXT: ret i32 %3
+}

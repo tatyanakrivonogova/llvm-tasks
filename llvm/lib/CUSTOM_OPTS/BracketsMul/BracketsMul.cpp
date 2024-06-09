@@ -3,50 +3,66 @@
 #include <cassert>
 
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/PatternMatch.h"
+// #include "llvm/Support/Casting.h"
 
 using namespace llvm;
 using namespace PatternMatch;
 
-template <bool FP>
 static bool matchesBracketsMul(BinaryOperator &I, Value *&X, Value *&A,
                                Value *&B) {
-  constexpr unsigned MulOp = FP ? Instruction::FMul : Instruction::Mul;
-  constexpr unsigned AddOp = FP ? Instruction::FAdd : Instruction::Add;
+  constexpr unsigned MulOp = Instruction::Mul;
+  constexpr unsigned AddOp = Instruction::Add;
 
-  if (match(&I, m_c_BinOp(
-                      AddOp,  m_OneUse(m_BinOp(MulOp, m_BinOp(AddOp, m_BinOp(AddOp, m_Value(A), m_Value(X)),
-                                          m_Value(B)),
-                                          m_Deferred(X))
-                                       ),
-                              m_OneUse(m_BinOp(MulOp, m_Deferred(B), m_Deferred(A)))
-                              ))) 
-  {
+  // (((A + X) + B) * X) + (B * A)
+  if (match(&I,
+            m_c_BinOp(AddOp,
+                      m_BinOp(
+                          MulOp,
+                          m_BinOp(AddOp, m_BinOp(AddOp, m_Value(A), m_Value(X)),
+                                  m_Value(B)),
+                          m_Deferred(X)),
+                      m_BinOp(MulOp, m_Deferred(B), m_Deferred(A)))))
     return true;
-  }
+  if (match(&I,
+            m_c_BinOp(AddOp,
+                      m_BinOp(
+                          MulOp,
+                          m_BinOp(AddOp, m_BinOp(AddOp, m_Value(X), m_Value(A)),
+                                  m_Value(B)),
+                          m_Deferred(X)),
+                      m_BinOp(MulOp, m_Deferred(B), m_Deferred(A)))))
+    return true;
 
-  return match(&I, m_c_BinOp(
-                      AddOp,  m_OneUse(m_BinOp(MulOp, m_Value(B), m_Value(X))),
-                              m_OneUse(m_BinOp(AddOp, m_BinOp(MulOp, m_Value(A), m_Deferred(X)),
-                                          m_BinOp(AddOp, m_BinOp(MulOp, m_Deferred(A), m_Deferred(B)),
-                                          m_BinOp(MulOp, m_Deferred(X), m_Deferred(X))))
-                                       )
-                              ));
+  // (B * X) + ((A * X) + ((A * B) + (X * X)))
+  if (match(&I,
+            m_c_BinOp(
+                AddOp, m_BinOp(MulOp, m_Value(B), m_Value(X)),
+                m_BinOp(
+                    AddOp, m_BinOp(MulOp, m_Value(A), m_Deferred(X)),
+                    m_BinOp(AddOp, m_BinOp(MulOp, m_Deferred(A), m_Deferred(B)),
+                            m_BinOp(MulOp, m_Deferred(X), m_Deferred(X)))))))
+    return true;
+  if (match(&I,
+            m_c_BinOp(
+                AddOp, m_BinOp(MulOp, m_Value(X), m_Value(B)),
+                m_BinOp(
+                    AddOp, m_BinOp(MulOp, m_Value(A), m_Deferred(X)),
+                    m_BinOp(AddOp, m_BinOp(MulOp, m_Deferred(A), m_Deferred(B)),
+                            m_BinOp(MulOp, m_Deferred(X), m_Deferred(X)))))))
+    return true;
 
+  return false;
 }
 
-std::vector<llvm::BinaryOperator*> custom_opts::FindBracketsMul(llvm::Function& func)
-{
-  std::vector<llvm::BinaryOperator*> foundInsts{};
-  for (llvm::BasicBlock& block : func)
-  {
-    for (llvm::Instruction& inst : block)
-    {
-      if (auto* binOp = llvm::dyn_cast<BinaryOperator>(&inst)) {
+std::vector<BinaryOperator *> custom_opts::FindBracketsMul(Function &func) {
+  std::vector<BinaryOperator *> foundInsts{};
+  for (BasicBlock &block : func) {
+    for (Instruction &inst : block) {
+      if (auto *binOp = dyn_cast<BinaryOperator>(&inst)) {
         Value *X, *A, *B;
-        if (matchesBracketsMul</*FP*/ true>(*binOp, X, A, B)) {
+        if (matchesBracketsMul(*binOp, X, A, B)) {
           foundInsts.push_back(binOp);
         }
       }
@@ -55,21 +71,20 @@ std::vector<llvm::BinaryOperator*> custom_opts::FindBracketsMul(llvm::Function& 
   return foundInsts;
 }
 
-
-llvm::Value* custom_opts::ConvertBracketsMul(llvm::BinaryOperator* binOp, llvm::Function& func)
-{
+Value *custom_opts::ConvertBracketsMul(BinaryOperator *binOp, Function &func) {
+  // printf("Convert brackets mul\n");
   assert(binOp && "binOp instruction is null");
 
-  llvm::IRBuilder<> builder{binOp};
-  llvm::Value *X, *A, *B;
-  
-  if (matchesBracketsMul</*FP*/ true>(*binOp, X, A, B)) {
-    llvm::Value* add1 = builder.CreateFAdd(X, A, "add1");
-    llvm::Value* add2 = builder.CreateFAdd(X, B, "add2");
-    llvm::Value* mul = builder.CreateFMul(add1, add2, "mul");
+  IRBuilder<> builder{binOp};
+  Value *X, *A, *B;
+
+  if (matchesBracketsMul(*binOp, X, A, B)) {
+    Value *add1 = builder.CreateAdd(X, A, "x.plus.a");
+    Value *add2 = builder.CreateAdd(X, B, "x.plus.b");
+    Value *mul = builder.CreateMul(add1, add2, "mul");
     binOp->replaceAllUsesWith(mul);
     binOp->eraseFromParent();
-    
+
     return mul;
   } else {
     return nullptr;

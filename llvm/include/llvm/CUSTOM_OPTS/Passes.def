@@ -16,6 +16,5 @@ FUNCTION_ANALYSIS("custom-opts-brackets-mul-analysis", custom_opts::BracketsMulA
 
 FUNCTION_PASS("print<custom-opts-brackets-mul-analysis>",
   custom_opts::BracketsMulAnalysisPrinter(dbgs()))
-FUNCTION_PASS("custom-opts-brackets-mul-transform", custom_opts::BracketsMulTransform())
 
 #undef FUNCTION_PASS

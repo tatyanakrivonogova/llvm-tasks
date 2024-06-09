@@ -1,0 +1,36 @@
+; RUN: opt < %s --passes="custom-opts-triple-brackets-mul-transform,instcombine" -S | FileCheck %s
+
+define dso_local noundef i32 @_Z5test1iii(i32 noundef %0, i32 noundef %1, i32 noundef %2) local_unnamed_addr #0 {
+  %4 = add i32 %0, %1
+  %5 = shl i32 %4, 1
+  %6 = add i32 %5, %2
+  %7 = mul i32 %6, %2
+  %8 = add i32 %0, %1
+  %9 = mul i32 %8, %8
+  %10 = add i32 %9, %7
+  ret i32 %10
+
+; CHECK-LABEL: @_Z5test1iii(
+; CHECK-NEXT: %add1 = add i32 %0, %1
+; CHECK-NEXT: %add2 = add i32 %add1, %2
+; CHECK-NEXT: %mul = mul i32 %add2, %add2
+; CHECK-NEXT: ret i32 %mul
+}
+
+
+define dso_local noundef signext i16 @_Z5test1sss(i16 noundef signext %0, i16 noundef signext %1, i16 noundef signext %2) local_unnamed_addr #0 {
+  %4 = add i16 %0, %1
+  %5 = shl i16 %4, 1
+  %6 = add i16 %5, %2
+  %7 = mul i16 %6, %2
+  %8 = add i16 %0, %1
+  %9 = mul i16 %8, %8
+  %10 = add i16 %9, %7
+  ret i16 %10
+
+; CHECK-LABEL: @_Z5test1sss(
+; CHECK-NEXT: %add1 = add i16 %0, %1
+; CHECK-NEXT: %add2 = add i16 %add1, %2
+; CHECK-NEXT: %mul = mul i16 %add2, %add2
+; CHECK-NEXT: ret i16 %mul
+}

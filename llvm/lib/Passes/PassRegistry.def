@@ -289,7 +289,11 @@ FUNCTION_ALIAS_ANALYSIS("scev-aa", SCEVAA())
 FUNCTION_ALIAS_ANALYSIS("scoped-noalias-aa", ScopedNoAliasAA())
 FUNCTION_ALIAS_ANALYSIS("tbaa", TypeBasedAA())
 // custom function analysis passes
-#include "llvm/CUSTOM_OPTS/Passes.def"
+// #include "llvm/CUSTOM_OPTS/Passes.def"
+FUNCTION_ANALYSIS("custom-opts-brackets-mul-analysis", custom_opts::BracketsMulAnalysis())
+FUNCTION_ANALYSIS("custom-opts-triple-brackets-mul-analysis", custom_opts::TripleBracketsMulAnalysis())
+FUNCTION_ANALYSIS("custom-opts-one-is-zero-analysis", custom_opts::OneIsZeroAnalysis())
+
 #undef FUNCTION_ALIAS_ANALYSIS
 #undef FUNCTION_ANALYSIS
 
@@ -462,7 +466,14 @@ FUNCTION_PASS("view-post-dom", PostDomViewer())
 FUNCTION_PASS("view-post-dom-only", PostDomOnlyViewer())
 FUNCTION_PASS("wasm-eh-prepare", WasmEHPreparePass())
 // custom function transform/printer passes
-#include "llvm/CUSTOM_OPTS/Passes.def"
+// #include "llvm/CUSTOM_OPTS/Passes.def"
+FUNCTION_PASS("print<custom-opts-brackets-mul-analysis>", custom_opts::BracketsMulAnalysisPrinter(dbgs()))
+FUNCTION_PASS("print<custom-opts-triple-brackets-mul-analysis>", custom_opts::TripleBracketsMulAnalysisPrinter(dbgs()))
+FUNCTION_PASS("print<custom-opts-one-is-zero-analysis>", custom_opts::OneIsZeroAnalysisPrinter(dbgs()))
+FUNCTION_PASS("custom-opts-brackets-mul-transform", custom_opts::BracketsMulTransform())
+FUNCTION_PASS("custom-opts-triple-brackets-mul-transform", custom_opts::TripleBracketsMulTransform())
+FUNCTION_PASS("custom-opts-one-is-zero-transform", custom_opts::OneIsZeroTransform())
+
 #undef FUNCTION_PASS
 
 #ifndef FUNCTION_PASS_WITH_PARAMS

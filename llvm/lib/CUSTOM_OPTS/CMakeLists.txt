@@ -1,1 +1,3 @@
 add_subdirectory(BracketsMul)
+add_subdirectory(TripleBracketsMul)
+add_subdirectory(OneIsZero)
